@@ -10,8 +10,6 @@ function errorHandler(err, req, res, next) {
     return next(err);
   }
 
-  console.error(`[${req.id || 'no-request-id'}]`, err);
-
   if (err.name === 'ValidationError') {
     const messages = Object.values(err.errors).map((error) => error.message);
     return res.status(400).json({ message: messages.join(', '), requestId: req.id });
@@ -36,6 +34,8 @@ function errorHandler(err, req, res, next) {
   if (err.type === 'entity.too.large') {
     return res.status(413).json({ message: 'Request body is too large', requestId: req.id });
   }
+
+  console.error(`[${req.id || 'no-request-id'}]`, err);
 
   return res.status(500).json({
     message: 'Something went wrong on the server',
