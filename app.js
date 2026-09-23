@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
+const helmet = require('helmet');
+const compression = require('compression');
 
 dotenv.config();
 
@@ -15,6 +17,9 @@ const { notFoundHandler, errorHandler } = require('./middleware/errorHandlers');
 const requestId = require('./middleware/requestId');
 
 const app = express();
+
+app.disable('x-powered-by');
+app.set('trust proxy', config.trustProxy);
 
 morgan.token('request-id', (req) => req.id);
 const requestLogFormat =
@@ -35,6 +40,10 @@ function buildCorsOptions() {
 
       return callback(new Error('Origin is not allowed by CORS'));
     },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID'],
+    exposedHeaders: ['X-Request-ID'],
+    optionsSuccessStatus: 204,
   };
 }
 
@@ -44,6 +53,8 @@ app.use(
     skip: () => config.nodeEnv === 'test',
   })
 );
+app.use(helmet());
+app.use(compression());
 app.use(cors(buildCorsOptions()));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
