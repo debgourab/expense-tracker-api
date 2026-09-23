@@ -240,6 +240,26 @@ router.get('/dashboard/summary', async (req, res, next) => {
   }
 });
 
+router.get('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: 'Invalid expense id' });
+    }
+
+    const expense = await Expense.findOne({ _id: id, userId: req.userId });
+
+    if (!expense) {
+      return res.status(404).json({ message: 'Expense not found' });
+    }
+
+    return res.json(expense);
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
