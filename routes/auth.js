@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const User = require('../models/User');
 const config = require('../config/env');
+const authMiddleware = require('../middleware/authMiddleware');
 const { authRateLimiter } = require('../middleware/rateLimiters');
 
 const router = express.Router();
@@ -122,6 +123,10 @@ router.post('/login', authRateLimiter, async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
+});
+
+router.get('/me', authMiddleware, (req, res) => {
+  return res.json({ user: formatUser(req.user) });
 });
 
 module.exports = router;
