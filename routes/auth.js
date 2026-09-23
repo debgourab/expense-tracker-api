@@ -9,7 +9,12 @@ const { authRateLimiter } = require('../middleware/rateLimiters');
 const router = express.Router();
 
 function createToken(userId) {
-  return jwt.sign({ userId }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+  return jwt.sign({}, config.jwtSecret, {
+    subject: userId.toString(),
+    issuer: config.jwtIssuer,
+    audience: config.jwtAudience,
+    expiresIn: config.jwtExpiresIn,
+  });
 }
 
 function formatUser(user) {
