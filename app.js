@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const morgan = require('morgan');
 
 dotenv.config();
 
@@ -11,8 +12,15 @@ const expenseRoutes = require('./routes/expenses');
 const config = require('./config/env');
 const { isDatabaseReady } = require('./config/database');
 const { notFoundHandler, errorHandler } = require('./middleware/errorHandlers');
+const requestId = require('./middleware/requestId');
 
 const app = express();
+
+morgan.token('request-id', (req) => req.id);
+const requestLogFormat =
+  config.logFormat === 'combined'
+    ? ':remote-addr - :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent" requestId=:request-id'
+    : ':method :url :status :response-time ms requestId=:request-id';
 
 function buildCorsOptions() {
   if (config.clientOrigins.length === 0) {
@@ -30,6 +38,12 @@ function buildCorsOptions() {
   };
 }
 
+app.use(requestId);
+app.use(
+  morgan(requestLogFormat, {
+    skip: () => config.nodeEnv === 'test',
+  })
+);
 app.use(cors(buildCorsOptions()));
 app.use(express.json({ limit: '100kb' }));
 app.use(express.static(path.join(__dirname, 'public')));
