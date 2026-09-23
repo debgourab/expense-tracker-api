@@ -15,7 +15,17 @@ function isValidObjectId(id) {
 function validateExpenseInput(data, isPartial = false) {
   const errors = [];
   const allowedFields = ['title', 'amount', 'category', 'date'];
+
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return ['Request body must be a JSON object'];
+  }
+
+  const unknownFields = Object.keys(data).filter((field) => !allowedFields.includes(field));
   const receivedFields = Object.keys(data).filter((field) => allowedFields.includes(field));
+
+  if (unknownFields.length > 0) {
+    errors.push(`Unsupported fields: ${unknownFields.join(', ')}`);
+  }
 
   if (isPartial && receivedFields.length === 0) {
     errors.push('At least one expense field is required');
@@ -24,20 +34,24 @@ function validateExpenseInput(data, isPartial = false) {
   if (!isPartial || Object.prototype.hasOwnProperty.call(data, 'title')) {
     if (!data.title || String(data.title).trim().length === 0) {
       errors.push('Title is required');
+    } else if (String(data.title).trim().length > 100) {
+      errors.push('Title cannot be longer than 100 characters');
     }
   }
 
   if (!isPartial || Object.prototype.hasOwnProperty.call(data, 'amount')) {
     const amount = Number(data.amount);
 
-    if (!Number.isFinite(amount) || amount <= 0) {
-      errors.push('Amount must be a number greater than zero');
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 100000000) {
+      errors.push('Amount must be between 0.01 and 100000000');
     }
   }
 
   if (!isPartial || Object.prototype.hasOwnProperty.call(data, 'category')) {
     if (!data.category || String(data.category).trim().length === 0) {
       errors.push('Category is required');
+    } else if (String(data.category).trim().length > 50) {
+      errors.push('Category cannot be longer than 50 characters');
     }
   }
 

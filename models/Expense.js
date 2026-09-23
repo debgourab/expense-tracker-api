@@ -12,6 +12,7 @@ const expenseSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Expense amount is required'],
       min: [0.01, 'Amount must be greater than zero'],
+      max: [100000000, 'Amount cannot exceed 100000000'],
     },
     category: {
       type: String,
