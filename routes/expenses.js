@@ -197,6 +197,49 @@ router.get('/dashboard/category-totals', async (req, res, next) => {
   }
 });
 
+router.get('/dashboard/summary', async (req, res, next) => {
+  try {
+    const now = new Date();
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    const [summary] = await Expense.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(req.userId) } },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: '$amount' },
+          transactionCount: { $sum: 1 },
+          averageAmount: { $avg: '$amount' },
+          currentMonthAmount: {
+            $sum: {
+              $cond: [{ $gte: ['$date', monthStart] }, '$amount', 0],
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          totalAmount: { $round: ['$totalAmount', 2] },
+          transactionCount: 1,
+          averageAmount: { $round: ['$averageAmount', 2] },
+          currentMonthAmount: { $round: ['$currentMonthAmount', 2] },
+        },
+      },
+    ]);
+
+    return res.json(
+      summary || {
+        totalAmount: 0,
+        transactionCount: 0,
+        averageAmount: 0,
+        currentMonthAmount: 0,
+      }
+    );
+  } catch (error) {
+    return next(error);
+  }
+});
+
 router.put('/:id', async (req, res, next) => {
   try {
     const { id } = req.params;
