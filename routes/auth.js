@@ -32,12 +32,20 @@ function validateSignupInput({ name, email, password }) {
     return 'Name, email, and password are required';
   }
 
-  if (!/^\S+@\S+\.\S+$/.test(email)) {
+  if (name.trim().length > 60) {
+    return 'Name cannot be longer than 60 characters';
+  }
+
+  if (email.trim().length > 254 || !/^\S+@\S+\.\S+$/.test(email.trim())) {
     return 'Please provide a valid email address';
   }
 
-  if (password.length < 6) {
-    return 'Password must be at least 6 characters long';
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters long';
+  }
+
+  if (Buffer.byteLength(password, 'utf8') > 72) {
+    return 'Password cannot be longer than 72 bytes';
   }
 
   return null;
@@ -52,7 +60,8 @@ router.post('/signup', authRateLimiter, async (req, res, next) => {
       return res.status(400).json({ message: validationError });
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const normalizedEmail = email.trim().toLowerCase();
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       return res.status(409).json({ message: 'Email already exists' });
@@ -61,7 +70,7 @@ router.post('/signup', authRateLimiter, async (req, res, next) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       name: name.trim(),
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       password: hashedPassword,
     });
 
