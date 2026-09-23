@@ -64,6 +64,7 @@ app.get('/api', (req, res) => {
     name: 'Expense Tracker API',
     version: '1.0.0',
     status: 'available',
+    documentation: '/openapi.yaml',
   });
 });
 
@@ -77,6 +78,10 @@ app.get('/ready', (req, res) => {
     status: ready ? 'ready' : 'not_ready',
     database: ready ? 'connected' : 'disconnected',
   });
+});
+
+app.get('/openapi.yaml', (req, res) => {
+  res.sendFile(path.join(__dirname, 'docs', 'openapi.yaml'));
 });
 
 app.use('/auth', authRoutes);
