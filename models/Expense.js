@@ -28,12 +28,14 @@ const expenseSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
-      index: true,
     },
   },
   {
     timestamps: true,
   }
 );
+
+expenseSchema.index({ userId: 1, date: -1 });
+expenseSchema.index({ userId: 1, category: 1 });
 
 module.exports = mongoose.model('Expense', expenseSchema);
