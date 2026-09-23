@@ -1,332 +1,278 @@
 # Expense Tracker API
 
-[![Node.js](https://img.shields.io/badge/Node.js-20%2B-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![API CI](https://github.com/debgourab/expense-tracker-api/actions/workflows/ci.yml/badge.svg)](https://github.com/debgourab/expense-tracker-api/actions/workflows/ci.yml)
+[![Node.js](https://img.shields.io/badge/Node.js-24_LTS-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Express](https://img.shields.io/badge/Express-4.x-000000?logo=express&logoColor=white)](https://expressjs.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)](https://mongoosejs.com/)
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdebgourab%2Fexpense-tracker-api&env=MONGO_URI,JWT_SECRET&envDescription=MongoDB%20connection%20string%20and%20JWT%20secret%20required%20for%20the%20Expense%20Tracker%20API)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A production-ready REST API for an Expense Tracker application. It provides JWT authentication, protected expense CRUD operations, category-wise spending summaries, MongoDB persistence, and a small static frontend for local demos.
+A secure REST API for personal expense tracking. It provides JWT-based
+authentication, user-scoped expense management, queryable transaction data,
+MongoDB analytics, operational health checks, and a small same-origin demo UI.
 
-Repository: [https://github.com/debgourab/expense-tracker-api](https://github.com/debgourab/expense-tracker-api)
+[Repository](https://github.com/debgourab/expense-tracker-api) | [OpenAPI specification](docs/openapi.yaml) | [Related client](https://github.com/debgourab/expense-tracker-client) | [Report an issue](https://github.com/debgourab/expense-tracker-api/issues)
 
-## Features
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/debgourab/expense-tracker-api)
 
-- User signup and login with JWT authentication
-- Secure password hashing with `bcryptjs`
-- Protected expense routes scoped to the authenticated user
-- Create, read, update, and delete expense records
-- Category-wise dashboard totals using MongoDB aggregation
-- Request validation and consistent JSON error responses
-- MongoDB schemas with Mongoose timestamps and indexes
-- Optional CORS allowlist for a separately deployed frontend
-- Vercel-ready Express export with local `npm start` support
-- Static demo UI served from `public/`
+## Architecture
 
-## Tech Stack
+```mermaid
+flowchart LR
+    Client[Vercel client or API consumer] -->|HTTPS and Bearer JWT| API[Express API on Render]
+    API -->|Mongoose| DB[(MongoDB Atlas)]
+    API --> Health[Health and readiness checks]
+    CI[GitHub Actions] -->|Validate each change| API
+```
 
-| Layer | Technology |
+The API enforces ownership at the database query level: every expense lookup,
+update, delete, and aggregation is scoped to the authenticated user.
+
+## Highlights
+
+- Signup, login, and authenticated profile endpoints
+- Password hashing with bcrypt and signed JWT access tokens
+- User-scoped create, read, update, and delete operations
+- Search, category filtering, date filtering, and configurable sorting
+- Category totals and overall/current-month spending analytics
+- Strict request validation and consistent JSON errors
+- Helmet security headers, CORS allowlisting, and auth rate limiting
+- Request IDs, structured HTTP logs, compression, and graceful shutdown
+- Liveness and database-readiness endpoints for hosting platforms
+- Compound MongoDB indexes for common user/date/category queries
+- OpenAPI 3.1 contract and automated HTTP tests
+- GitHub Actions CI and a Render Blueprint for repeatable deployments
+
+## Technology
+
+| Area | Technology |
 | --- | --- |
-| Runtime | Node.js 20+ |
-| Framework | Express.js |
-| Database | MongoDB |
-| ODM | Mongoose |
-| Authentication | JSON Web Tokens |
-| Password Hashing | bcryptjs |
-| Deployment | Vercel |
+| Runtime | Node.js 24 LTS |
+| HTTP API | Express.js |
+| Database | MongoDB and Mongoose |
+| Authentication | JSON Web Token and bcryptjs |
+| Security | Helmet, CORS, express-rate-limit |
+| Operations | Morgan, request IDs, compression, Render health checks |
+| Testing | Node.js test runner and Supertest |
+| Deployment | Render Web Service and MongoDB Atlas |
 
 ## Project Structure
 
 ```text
 .
+|-- .github/workflows/ci.yml     # Continuous integration
 |-- config/
-|   `-- env.js
+|   |-- database.js              # MongoDB connection lifecycle
+|   `-- env.js                   # Validated runtime configuration
+|-- docs/openapi.yaml            # OpenAPI 3.1 contract
 |-- middleware/
-|   `-- authMiddleware.js
-|-- models/
-|   |-- Expense.js
-|   `-- User.js
-|-- public/
-|   |-- app.js
-|   |-- index.html
-|   `-- styles.css
-|-- routes/
-|   |-- auth.js
-|   `-- expenses.js
-|-- .env.example
-|-- .gitignore
-|-- package-lock.json
-|-- package.json
-|-- server.js
-`-- vercel.json
+|   |-- authMiddleware.js        # JWT authentication and user lookup
+|   |-- errorHandlers.js         # 404 and centralized error responses
+|   |-- rateLimiters.js          # Authentication abuse protection
+|   `-- requestId.js             # Request tracing
+|-- models/                       # User and Expense schemas
+|-- public/                       # Optional same-origin demo UI
+|-- routes/                       # Authentication and expense endpoints
+|-- test/                         # HTTP-level automated tests
+|-- app.js                        # Express application composition
+|-- server.js                     # Database startup and graceful shutdown
+`-- render.yaml                   # Render infrastructure definition
 ```
 
-## Getting Started
+## Quick Start
 
-### Prerequisites
+### Requirements
 
-- Node.js 20 or newer
-- npm
-- MongoDB Atlas cluster or a local MongoDB server
+- Node.js 24
+- npm 11 or newer
+- MongoDB Atlas or a local MongoDB server
 
 ### Installation
 
 ```bash
 git clone https://github.com/debgourab/expense-tracker-api.git
 cd expense-tracker-api
-npm install
-```
-
-Create a local environment file:
-
-```bash
+npm ci
 cp .env.example .env
-```
-
-Update `.env` with your values:
-
-```env
-PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/expense-tracker
-JWT_SECRET=replace-this-with-a-long-random-secret
-JWT_EXPIRES_IN=1d
-CLIENT_ORIGIN=http://localhost:5000
-```
-
-Start the API:
-
-```bash
 npm run dev
 ```
 
-Production-style local start:
+On Windows PowerShell, create the environment file with:
 
-```bash
-npm start
+```powershell
+Copy-Item .env.example .env
 ```
 
-Open the local demo UI at [http://localhost:5000](http://localhost:5000), or check the API health endpoint:
+The API and demo UI are available at `http://localhost:5000`. Useful checks:
 
 ```bash
+curl http://localhost:5000/api
 curl http://localhost:5000/health
+curl http://localhost:5000/ready
 ```
 
 ## Environment Variables
 
-| Variable | Required | Description | Example |
+| Variable | Production | Purpose | Example |
 | --- | --- | --- | --- |
-| `PORT` | No | Local server port. Vercel provides its own port automatically. | `5000` |
-| `MONGO_URI` | Yes on Vercel | MongoDB connection string. Use MongoDB Atlas for production. | `mongodb+srv://...` |
-| `JWT_SECRET` | Yes on Vercel | Secret used to sign and verify JWTs. Use a long random value. | `openssl rand -base64 32` |
-| `JWT_EXPIRES_IN` | No | JWT lifetime accepted by `jsonwebtoken`. | `1d` |
-| `CLIENT_ORIGIN` | No | Comma-separated CORS allowlist. Leave blank to allow all origins. | `https://your-client.vercel.app` |
+| `PORT` | Provided by Render | HTTP listening port | `5000` |
+| `MONGO_URI` | Required | MongoDB connection string | `mongodb+srv://.../expense-tracker` |
+| `JWT_SECRET` | Required | Secret used to sign access tokens | Random 64-byte value |
+| `JWT_EXPIRES_IN` | Optional | Access-token lifetime | `1d` |
+| `JWT_ISSUER` | Optional | Expected JWT issuer | `expense-tracker-api` |
+| `JWT_AUDIENCE` | Optional | Expected JWT audience | `expense-tracker-client` |
+| `CLIENT_ORIGIN` | Recommended | Comma-separated CORS allowlist | `https://app.vercel.app` |
+| `LOG_FORMAT` | Optional | `dev` or `combined` request logs | `combined` |
+| `NODE_ENV` | Required | Enables production safeguards | `production` |
+
+Generate a strong JWT secret locally:
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(64).toString('hex'))"
+```
+
+Never expose `MONGO_URI` or `JWT_SECRET` in browser code, Vercel client
+variables, logs, screenshots, or committed files.
+
+For multiple browser origins, use exact comma-separated URLs without trailing
+slashes:
+
+```env
+CLIENT_ORIGIN=http://localhost:5500,https://expense-tracker-client.vercel.app
+```
+
+## Authentication Flow
+
+1. The client calls `POST /auth/signup` or `POST /auth/login`.
+2. The API returns a signed access token and a safe user object.
+3. Protected requests send `Authorization: Bearer <token>`.
+4. The API validates the token issuer, audience, expiry, and user account.
+5. Expense queries are restricted to that user's MongoDB identifier.
+
+Example login:
+
+```bash
+curl -X POST http://localhost:5000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"deb@example.com","password":"strong-password"}'
+```
+
+Example protected request:
+
+```bash
+curl http://localhost:5000/expenses \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+```
 
 ## API Reference
 
-Base URL for local development:
+| Method | Endpoint | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api` | Public | Service metadata |
+| `GET` | `/health` | Public | Process liveness |
+| `GET` | `/ready` | Public | MongoDB readiness |
+| `GET` | `/openapi.yaml` | Public | Machine-readable API contract |
+| `POST` | `/auth/signup` | Public | Create an account |
+| `POST` | `/auth/login` | Public | Receive an access token |
+| `GET` | `/auth/me` | Bearer token | Read the current user |
+| `GET` | `/expenses` | Bearer token | List and query expenses |
+| `POST` | `/expenses` | Bearer token | Create an expense |
+| `GET` | `/expenses/:id` | Bearer token | Read one owned expense |
+| `PUT` | `/expenses/:id` | Bearer token | Update one owned expense |
+| `DELETE` | `/expenses/:id` | Bearer token | Delete one owned expense |
+| `GET` | `/expenses/dashboard/category-totals` | Bearer token | Aggregate categories |
+| `GET` | `/expenses/dashboard/summary` | Bearer token | Aggregate spending metrics |
+
+`GET /expenses` accepts `category`, `search`, `from`, `to`, and `sort` query
+parameters. Valid sort values are `newest`, `oldest`, `highest`, and `lowest`.
 
 ```text
-http://localhost:5000
+GET /expenses?search=travel&from=2026-01-01&to=2026-12-31&sort=highest
 ```
 
-### Health
+Every response includes an `X-Request-ID` header. Error responses include the
+same identifier in the JSON body so a client-side failure can be matched to
+server logs.
 
-#### `GET /health`
-
-Returns API status.
-
-```json
-{
-  "status": "ok",
-  "message": "Expense Tracker API is running"
-}
-```
-
-### Authentication
-
-#### `POST /auth/signup`
-
-Creates a new user and returns a JWT.
-
-Request body:
-
-```json
-{
-  "name": "Deb Gourab",
-  "email": "deb@example.com",
-  "password": "password123"
-}
-```
-
-#### `POST /auth/login`
-
-Authenticates an existing user and returns a JWT.
-
-Request body:
-
-```json
-{
-  "email": "deb@example.com",
-  "password": "password123"
-}
-```
-
-Successful auth response:
-
-```json
-{
-  "message": "Login successful",
-  "token": "jwt-token",
-  "user": {
-    "id": "user-id",
-    "name": "Deb Gourab",
-    "email": "deb@example.com"
-  }
-}
-```
-
-### Expenses
-
-All expense routes require this header:
-
-```text
-Authorization: Bearer <token>
-```
-
-#### `GET /expenses`
-
-Returns all expenses for the authenticated user.
-
-#### `POST /expenses`
-
-Creates a new expense.
-
-Request body:
-
-```json
-{
-  "title": "Groceries",
-  "amount": 750,
-  "category": "Food",
-  "date": "2026-09-23"
-}
-```
-
-#### `PUT /expenses/:id`
-
-Updates one expense owned by the authenticated user. You can send one or more fields.
-
-```json
-{
-  "amount": 950,
-  "category": "Shopping"
-}
-```
-
-#### `DELETE /expenses/:id`
-
-Deletes one expense owned by the authenticated user.
-
-#### `GET /expenses/dashboard/category-totals`
-
-Returns totals grouped by category.
-
-```json
-[
-  {
-    "count": 3,
-    "category": "Food",
-    "totalAmount": 2450
-  }
-]
-```
-
-## Data Models
-
-### User
-
-| Field | Type | Notes |
-| --- | --- | --- |
-| `name` | String | Required, max 60 characters |
-| `email` | String | Required, unique, lowercase |
-| `password` | String | Required, hashed, hidden by default |
-| `createdAt` | Date | Added by Mongoose |
-| `updatedAt` | Date | Added by Mongoose |
-
-### Expense
-
-| Field | Type | Notes |
-| --- | --- | --- |
-| `title` | String | Required, max 100 characters |
-| `amount` | Number | Required, minimum `0.01` |
-| `category` | String | Required, max 50 characters |
-| `date` | Date | Defaults to current date |
-| `userId` | ObjectId | Required, indexed, references `User` |
-| `createdAt` | Date | Added by Mongoose |
-| `updatedAt` | Date | Added by Mongoose |
-
-## Vercel Deployment
-
-This API is prepared for Vercel with:
-
-- `module.exports = app` in `server.js` for Express detection
-- `vercel.json` with the Express framework preset
-- `engines.node` set to Node.js 20+
-- Lazy MongoDB connection handling for serverless function reuse
-
-### Deploy from GitHub
-
-1. Push this server folder to [https://github.com/debgourab/expense-tracker-api](https://github.com/debgourab/expense-tracker-api).
-2. Open [Vercel New Project](https://vercel.com/new).
-3. Import the GitHub repository.
-4. Keep the framework preset as Express, or allow Vercel to detect it.
-5. Add these environment variables:
-   - `MONGO_URI`
-   - `JWT_SECRET`
-   - `JWT_EXPIRES_IN` (optional)
-   - `CLIENT_ORIGIN` (optional)
-6. Deploy.
-7. Test the deployed health endpoint:
+## Quality Checks
 
 ```bash
-curl https://your-project.vercel.app/health
+npm run check       # Parse-check application source
+npm test            # Run HTTP contract tests
+npm run validate    # Run the complete local/CI validation pipeline
 ```
 
-### Deploy from the CLI
+GitHub Actions runs `npm run validate` for every push and pull request targeting
+`main`. Current tests cover service metadata, liveness, readiness, headers,
+request tracing, CORS, validation, malformed JSON, and 404 behavior.
 
-Install and run the Vercel CLI:
+## Deploy To Render
 
-```bash
-npm i -g vercel
-vercel link
-vercel env add MONGO_URI
-vercel env add JWT_SECRET
-vercel deploy
-vercel --prod
-```
+The included `render.yaml` defines the build command, start command, health
+check, Node.js version, generated JWT secret, and required secret prompts.
 
-## Scripts
+### Blueprint Deployment
 
-| Command | Description |
+1. Push the repository to GitHub.
+2. Open the [Render Dashboard](https://dashboard.render.com/).
+3. Select **New > Blueprint**.
+4. Connect `debgourab/expense-tracker-api`.
+5. Enter `MONGO_URI` and the final Vercel URL for `CLIENT_ORIGIN`.
+6. Deploy and verify `https://YOUR-SERVICE.onrender.com/health`.
+
+### Manual Web Service Settings
+
+| Setting | Value |
 | --- | --- |
-| `npm run dev` | Start the API locally with Nodemon |
-| `npm start` | Start the API with Node.js |
-| `npm run check` | Run syntax checks for server source files |
+| Runtime | Node |
+| Branch | `main` |
+| Build command | `npm ci --omit=dev` |
+| Start command | `npm start` |
+| Health check path | `/health` |
+| Node version | `24.21.0` |
 
-## Security Notes
+In MongoDB Atlas, allow every CIDR listed under the Render service's
+**Connect > Outbound** panel. A temporary `0.0.0.0/0` rule can help with an
+initial deployment, but replace it with Render's outbound ranges afterward.
 
-- Never commit `.env` or production secrets.
-- Use a strong `JWT_SECRET` in production.
-- Use MongoDB Atlas or another hosted MongoDB provider for Vercel deployments.
-- Set `CLIENT_ORIGIN` to your frontend domain when the client is hosted separately.
-- Tokens are bearer credentials. Store and send them carefully from the frontend.
+See the official [Render Node/Express guide](https://render.com/docs/deploy-node-express-app),
+[Blueprint reference](https://render.com/docs/blueprint-spec), and
+[MongoDB Atlas connection guide](https://www.mongodb.com/docs/atlas/connect-to-database-deployment/).
 
-## License
+## Connecting A Vercel Client
 
-This project is licensed under the MIT License.
+The browser client needs only the public Render API URL, for example:
+
+```js
+const API_BASE_URL = 'https://expense-tracker-api.onrender.com';
+```
+
+Do not send server secrets to Vercel. After the client receives a token from
+signup or login, it should attach the token to protected requests. Finally, set
+Render's `CLIENT_ORIGIN` to the exact Vercel production URL and redeploy.
+
+## Security
+
+- Passwords are hashed before persistence and excluded from normal queries.
+- JWTs include subject, issuer, audience, and expiry claims.
+- Authentication requests are rate limited.
+- Expense ownership is enforced in every protected database operation.
+- Request bodies are size-limited and reject unsupported expense fields.
+- Production secrets fail validation instead of using development fallbacks.
+- Vulnerabilities should be reported according to [SECURITY.md](SECURITY.md).
+
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md), run
+`npm run validate`, and update the OpenAPI contract when changing an endpoint.
 
 ## Author
 
 **Deb Gourab Biswas**
 
-- GitHub: [debgourab](https://github.com/debgourab)
+- GitHub: [@debgourab](https://github.com/debgourab)
 - Repository: [expense-tracker-api](https://github.com/debgourab/expense-tracker-api)
+- Client repository: [expense-tracker-client](https://github.com/debgourab/expense-tracker-client)
+
+## License
+
+Released under the [MIT License](LICENSE).
