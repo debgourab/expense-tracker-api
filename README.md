@@ -240,15 +240,17 @@ See the official [Render Node/Express guide](https://render.com/docs/deploy-node
 
 ## Connecting A Vercel Client
 
-The browser client needs only the public Render API URL, for example:
+The browser client needs only the public Render API URL. In the Vercel project
+for `expense-tracker-client`, set:
 
-```js
-const API_BASE_URL = 'https://expense-tracker-api.onrender.com';
+```env
+VITE_API_BASE_URL=https://expense-tracker-api.onrender.com
 ```
 
-Do not send server secrets to Vercel. After the client receives a token from
-signup or login, it should attach the token to protected requests. Finally, set
-Render's `CLIENT_ORIGIN` to the exact Vercel production URL and redeploy.
+The client build creates a public `config.js` file with that URL. Do not send
+server secrets to Vercel. After the client receives a token from signup or
+login, it attaches the token to protected requests. Finally, set Render's
+`CLIENT_ORIGIN` to the exact Vercel production URL and redeploy the API.
 
 ## Security
 
