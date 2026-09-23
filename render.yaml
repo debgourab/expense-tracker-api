@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: expense-tracker-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 24.21.0
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: JWT_ISSUER
+        value: expense-tracker-api
+      - key: JWT_AUDIENCE
+        value: expense-tracker-client
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: LOG_FORMAT
+        value: combined
