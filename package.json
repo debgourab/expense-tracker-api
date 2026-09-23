@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "check": "node --check server.js && node --check config/env.js && node --check routes/auth.js && node --check routes/expenses.js && node --check middleware/authMiddleware.js && node --check models/User.js && node --check models/Expense.js"
+    "check": "node --check app.js && node --check server.js && node --check config/env.js && node --check config/database.js && node --check routes/auth.js && node --check routes/expenses.js && node --check middleware/authMiddleware.js && node --check middleware/errorHandlers.js && node --check middleware/rateLimiters.js && node --check middleware/requestId.js && node --check models/User.js && node --check models/Expense.js",
+    "test": "node --test --test-isolation=none",
+    "validate": "npm run check && npm test"
   },
   "keywords": [
     "expense-tracker",
