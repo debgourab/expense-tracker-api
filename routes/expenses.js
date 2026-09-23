@@ -84,6 +84,57 @@ function buildExpensePayload(data) {
   return payload;
 }
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function buildExpenseQuery(userId, query) {
+  const filter = { userId };
+
+  if (typeof query.category === 'string' && query.category.trim()) {
+    filter.category = new RegExp(`^${escapeRegex(query.category.trim())}$`, 'i');
+  }
+
+  if (typeof query.search === 'string' && query.search.trim()) {
+    const search = new RegExp(escapeRegex(query.search.trim().slice(0, 100)), 'i');
+    filter.$or = [{ title: search }, { category: search }];
+  }
+
+  if (query.from || query.to) {
+    filter.date = {};
+
+    if (query.from) {
+      const from = new Date(query.from);
+
+      if (Number.isNaN(from.getTime())) {
+        return { error: 'from must be a valid date' };
+      }
+
+      filter.date.$gte = from;
+    }
+
+    if (query.to) {
+      const to = new Date(query.to);
+
+      if (Number.isNaN(to.getTime())) {
+        return { error: 'to must be a valid date' };
+      }
+
+      to.setUTCHours(23, 59, 59, 999);
+      filter.date.$lte = to;
+    }
+  }
+
+  const sortOptions = {
+    newest: { date: -1, createdAt: -1 },
+    oldest: { date: 1, createdAt: 1 },
+    highest: { amount: -1, date: -1 },
+    lowest: { amount: 1, date: -1 },
+  };
+
+  return { filter, sort: sortOptions[query.sort] || sortOptions.newest };
+}
+
 router.post('/', async (req, res, next) => {
   try {
     const errors = validateExpenseInput(req.body);
@@ -105,7 +156,13 @@ router.post('/', async (req, res, next) => {
 
 router.get('/', async (req, res, next) => {
   try {
-    const expenses = await Expense.find({ userId: req.userId }).sort({ date: -1, createdAt: -1 });
+    const query = buildExpenseQuery(req.userId, req.query);
+
+    if (query.error) {
+      return res.status(400).json({ message: query.error });
+    }
+
+    const expenses = await Expense.find(query.filter).sort(query.sort);
     return res.json(expenses);
   } catch (error) {
     return next(error);
