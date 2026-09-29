@@ -1,4 +1,4 @@
-const path = require('path');
+// const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -57,14 +57,14 @@ app.use(helmet());
 app.use(compression());
 app.use(cors(buildCorsOptions()));
 app.use(express.json({ limit: '100kb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api', (req, res) => {
   res.json({
     name: 'Expense Tracker API',
     version: '1.0.0',
     status: 'available',
-    documentation: '/openapi.yaml',
+    // documentation: '/openapi.yaml',
   });
 });
 
@@ -80,9 +80,9 @@ app.get('/ready', (req, res) => {
   });
 });
 
-app.get('/openapi.yaml', (req, res) => {
-  res.sendFile(path.join(__dirname, 'docs', 'openapi.yaml'));
-});
+// app.get('/openapi.yaml', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'docs', 'openapi.yaml'));
+// });
 
 app.use('/auth', authRoutes);
 app.use('/expenses', expenseRoutes);
